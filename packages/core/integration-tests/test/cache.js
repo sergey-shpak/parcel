@@ -20,6 +20,7 @@ import {
   distDir,
   getParcelOptions,
   assertNoFilePathInCache,
+  findAsset,
 } from '@parcel/test-utils';
 import {md} from '@parcel/diagnostic';
 import fs from 'fs';
@@ -5907,5 +5908,23 @@ describe('cache', function () {
     });
 
     assert.equal(await run(b.bundleGraph), 6);
+  });
+
+  it('supports multiple empty assets', async function () {
+    // Try to store multiple empty assets using LMDB
+    let build = await runBundle(
+      path.join(__dirname, 'integration/multiple-empty-assets/index.js'),
+      {
+        outputFS: inputFS,
+      },
+    );
+
+    let a = nullthrows(findAsset(build.bundleGraph, 'a.js'));
+    let b = nullthrows(findAsset(build.bundleGraph, 'a.js'));
+    assert.strictEqual((await a.getBuffer()).length, 0);
+    assert.strictEqual((await b.getBuffer()).length, 0);
+
+    let res = await run(build.bundleGraph);
+    assert.strictEqual(res, 'foo');
   });
 });
